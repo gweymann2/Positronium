@@ -16,10 +16,16 @@ channel_2=data.loc[(data.iloc[:,2]>=1),:]
 channel_3=data.loc[(data.iloc[:,4]>=1),:]
 
 #plt.figure(figsize=(16,10))
-##plt.hist(channel_1['E1'],bins=100)
-##plt.hist(channel_2['E2'],bins=100)
-#plt.hist(channel_3['E3'],bins=100)
-#plt.show()
+plt.hist(channel_1['E1'],bins=1000,label='Channel 1: BERNA')
+plt.hist(channel_3['E3'],bins=1000,label='Channel 3: BLACK')
+plt.hist(channel_2['E2'],bins=1000,label='Channel 2: DEMO')
+plt.legend(bbox_to_anchor=(0.987, 0.982), loc=1, borderaxespad=0.)
+plt.title('Histograms for each channels',fontsize=17)
+plt.xlabel('ADC',fontsize=17)
+plt.ylabel('Count of photons',fontsize=17)
+for tickLabel in plt.gca().get_xticklabels()+plt.gca().get_yticklabels():
+    tickLabel.set_fontsize(15)
+plt.show()
 
 E1 = np.array(channel_1['E1'])
 E2 = np.array(channel_2['E2'])
@@ -44,16 +50,16 @@ for i in range(3):
 #    mean = np.mean(binc[sel_off])
 
     par_off, par_var_off = curve_fit(gaussian_func, binc[sel_off], hist[sel_off], p0=par, sigma=err_hist[sel_off],absolute_sigma=True)
-    
+
     parameters1.append([par_off[0],par_off[1],par_off[2],par_off[3],par_off[4]])
-    
+
     plt.figure(figsize=(16,10))
     plt.scatter(binc[sel_off],hist[sel_off])
     plt.plot(binc[sel_off], gaussian_func(binc[sel_off], *par_off))
     plt.savefig('FitPeak_channel{}'.format(i))
 
 
-    
+
     sel_off2 = (binc>(par[1]+3*par_off[2]))
     m = np.where(hist == np.max(hist[sel_off2]))
     sel_new = (binc>(binc[m]*0.93))*(binc<(binc[m]*1.07))
@@ -68,7 +74,7 @@ for i in range(3):
 #    print(par_new)
 
     par_off, par_var_off = curve_fit(gaussian_func, binc[sel_off_new], hist[sel_off_new], p0=par_new, sigma=err_hist[sel_off_new],absolute_sigma=True)
-    
+
     parameters2.append([par_off[0], par_off[1],par_off[2],par_off[3],par_off[4]])
 
     plt.figure(figsize=(16,10))
@@ -80,27 +86,3 @@ parameters1_table = AsciiTable(parameters1)
 parameters2_table = AsciiTable(parameters2)
 print(parameters1_table.table)
 print(parameters2_table.table)
-
-#Cuts on the arrays, last peak
-
-#sel = (binc>620000)*(binc<700000)
-
-#mean = np.mean(binc[sel])
-
-#par, par_var=curve_fit(gaussian_func, binc[sel], hist[sel], p0=[1, mean, mean*0.01, 1, 1],sigma=err_hist[sel],absolute_sigma=True)
-
-#print(*par)
-#print(np.sqrt(np.diag(par_var)))
-#plt.figure(figsize=(16,10))
-#plt.scatter(binc[sel],hist[sel])
-#plt.plot(binc[sel], gaussian_func(binc[sel], *par))
-#
-#sel_off = (binc>(par[1]-3*par[2]))*(binc<(par[1]+3*par[2]))
-#mean = np.mean(binc[sel_off])
-#
-#par_off, par_var_off = curve_fit(gaussian_func, binc[sel_off], hist[sel_off], p0=par, sigma=err_hist[sel_off],absolute_sigma=True)
-#
-#plt.figure(figsize=(16,10))
-#plt.scatter(binc[sel_off],hist[sel_off])
-#plt.plot(binc[sel_off], gaussian_func(binc[sel_off], *par_off))
-#plt.show()
