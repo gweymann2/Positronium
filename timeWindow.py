@@ -52,7 +52,7 @@ T23 = t23 - t23D
 
 plt.figure(figsize=(8,5))
 #plt.hist(t12,bins=100,label='Title')
-plt.hist(t12,bins=100,label='Title')
+plt.hist(t23,bins=100,label='Title')
 plt.legend(bbox_to_anchor=(0.987, 0.982), loc=1, borderaxespad=0.)
 plt.title('Histograms for each channels ',fontsize=17)
 plt.xlabel('ADC',fontsize=17)
