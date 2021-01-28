@@ -66,9 +66,11 @@ for k,el in enumerate(Elements):
             maxim = np.where(hist == np.max(hist[sel_2max]))
             defin = (binc>(binc[m]*0.93))*(binc<binc[maxim]*1.07)
             mean_2max = np.mean(binc[sel_2max])
-            print(binc[m], binc[maxim])
+            #print(binc[m], binc[maxim])
             par_2max, par_va_2max = curve_fit(_2_gaussian_func, binc[defin], hist[defin], p0=[np.max(hist), binc[m][0], binc[m][0]*0.01, np.max(hist), binc[maxim][0], binc[maxim][0]*0.01, 1, 1 ],sigma=err_hist[defin],absolute_sigma=True)
-            print(*par_2max)
+            #print(*par_2max)
+            #sel_off_2max = (binc>(par_2max[1]-3*par_2max[2]))*(binc<(par_2max[4]+3*par_2max[5]))
+            #par_2max_off, par_va_2max_off = curve_fit(_2_gaussian_func, binc[defin], hist[defin])
 
             plt.figure(10*k+i+1, figsize=(16,10))
             g1=plt.scatter(binc[defin],hist[defin],label='1st peak',color='lightblue')
