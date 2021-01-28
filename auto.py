@@ -20,7 +20,7 @@ def chi2red(sel,are1or2gaussians,*p):
         dof=len(binc[sel])-5
     else:
         chi2=sum(((hist[sel] - _2_gaussian_func(binc[sel],*p) )/ err_hist[sel]) ** 2)
-        dof=len(binc[sel])-8       
+        dof=len(binc[sel])-8
     #print(chi2, dof)
     return round(chi2/dof,2)
 
@@ -56,8 +56,10 @@ for k,el in enumerate(Elements):
 
     E = [E1, E2, E3]
     parameters1 = [['Channel', 'Amplitude', 'Average', 'AverageError', 'Sigma', 'SigmaError', 'a', 'b']]
+    paramCo1 = [['Channel', 'Amplitude', 'Average', 'AverageError', 'Sigma', 'SigmaError', 'a', 'b']]
     #parameters2 = [['Channel', 'Amplitude', 'Average', 'Sigma', 'a', 'b']]
     parameters2 = []
+    paramCo2=[]
 
     for i,ch in enumerate(Channel):
 
@@ -74,14 +76,27 @@ for k,el in enumerate(Elements):
             #print(binc[m], binc[maxim])
             par_2max, par_va_2max = curve_fit(_2_gaussian_func, binc[defin], hist[defin], p0=[np.max(hist), binc[m][0], binc[m][0]*0.01, np.max(hist), binc[maxim][0], binc[maxim][0]*0.01, 1, 1 ],sigma=err_hist[defin],absolute_sigma=True)
             #print(*par_2max)
-            #sel_off_2max = (binc>(par_2max[1]-3*par_2max[2]))*(binc<(par_2max[4]+3*par_2max[5]))
-            #par_2max_off, par_va_2max_off = curve_fit(_2_gaussian_func, binc[defin], hist[defin])
-            
+            sel_off_2max = (binc>(par_2max[1]-3*par_2max[2]))*(binc<(par_2max[4]+3*par_2max[5]))
+            par_2max_off, par_va_2max_off = curve_fit(_2_gaussian_func, binc[sel_off_2max], hist[sel_off_2max], p0=par_2max, sigma=err_hist[sel_off_2max],absolute_sigma=True)
+
             chi2=chi2red(defin,2,*par_2max)
             a=chi2**0.5
             print(a)
-        
-            
+
+            par_2max_off, par_va_2max_off = curve_fit(_2_gaussian_func, binc[sel_off_2max], hist[sel_off_2max], p0=par_2max, sigma=a*err_hist[sel_off_2max],absolute_sigma=True)
+
+            mu_err = np.sqrt(np.diag(par_va_2max_off)[1])
+            sigma_err = np.sqrt(np.diag(par_va_2max_off)[2])
+
+            mu_err_2 = np.sqrt(np.diag(par_va_2max_off)[4])
+            sigma_err_2 = np.sqrt(np.diag(par_va_2max_off)[5])
+
+            print(i+1, par_2max_off[0],par_2max_off[1], mu_err, par_2max_off[2], sigma_err, par_2max_off[6],par_2max_off[7])
+
+            paramCo1.append([i+1, par_2max_off[0],par_2max_off[1], mu_err, par_2max_off[2], sigma_err, par_2max_off[6],par_2max_off[7]])
+            paramCo2.append([i+1, par_2max_off[3],par_2max_off[4], mu_err_2, par_2max_off[5], sigma_err_2, par_2max_off[6],par_2max_off[7]])
+
+
             plt.figure(10*k+i+1, figsize=(16,10))
             g1=plt.scatter(binc[defin],hist[defin],label='1st peak',color='lightblue')
             plt.errorbar(binc[defin], hist[defin], err_hist[defin],fmt='.', color='lightblue',ecolor='lightgray', elinewidth=2, capsize=0)
@@ -94,16 +109,18 @@ for k,el in enumerate(Elements):
             par, par_var=curve_fit(gaussian_func, binc[sel], hist[sel], p0=[np.max(hist), mean, mean*0.01, 1, 1],sigma=err_hist[sel],absolute_sigma=True)
             sel_off = (binc>(par[1]-3*par[2]))*(binc<(par[1]+3*par[2]))
         #    mean = np.mean(binc[sel_off])
-
             par_off, par_var_off = curve_fit(gaussian_func, binc[sel_off], hist[sel_off], p0=par, sigma=err_hist[sel_off],absolute_sigma=True)
-            mu_err = np.sqrt(np.diag(par_var_off)[1])
-            sigma_err = np.sqrt(np.diag(par_var_off)[2])
-            parameters1.append([i+1, par_off[0],par_off[1], mu_err, par_off[2], sigma_err, par_off[3],par_off[4]])
-            
+
             chi2=chi2red(sel_off,1,*par_off)
             a=chi2**0.5
             print(a)
-            
+
+            par_off_, par_var_off = curve_fit(gaussian_func, binc[sel_off], hist[sel_off], p0=par, sigma=a*err_hist[sel_off],absolute_sigma=True)
+
+            mu_err = np.sqrt(np.diag(par_var_off)[1])
+            sigma_err = np.sqrt(np.diag(par_var_off)[2])
+            parameters1.append([i+1, par_off[0],par_off[1], mu_err, par_off[2], sigma_err, par_off[3],par_off[4]])
+
             plt.figure(10*k+i+1, figsize=(16,10))
             g1=plt.scatter(binc[sel_off],hist[sel_off],label='1st peak',color='lightblue')
             plt.errorbar(binc[sel_off], hist[sel_off], err_hist[sel_off],fmt='.', color='lightblue',ecolor='lightgray', elinewidth=2, capsize=0)
@@ -126,14 +143,17 @@ for k,el in enumerate(Elements):
                 sel_off_new = (binc>(par_new[1]-3*par_new[2]))*(binc<(par_new[1]+3*par_new[2]))
 
                 par_off, par_var_off = curve_fit(gaussian_func, binc[sel_off_new], hist[sel_off_new], p0=par_new, sigma=err_hist[sel_off_new],absolute_sigma=True)
-                mu_err = np.sqrt(np.diag(par_var_off)[1])
-                sigma_err = np.sqrt(np.diag(par_var_off)[2])
-                parameters2.append([i+1, par_off[0], par_off[1], mu_err, par_off[2], sigma_err, par_off[3],par_off[4]])
-               
+
                 chi2=chi2red(sel_off_new,1,*par_off)
                 a=chi2**0.5
                 print(a)
-                
+                par_off, par_var_off = curve_fit(gaussian_func, binc[sel_off_new], hist[sel_off_new], p0=par_new, sigma=a*err_hist[sel_off_new],absolute_sigma=True)
+
+                mu_err = np.sqrt(np.diag(par_var_off)[1])
+                sigma_err = np.sqrt(np.diag(par_var_off)[2])
+                parameters2.append([i+1, par_off[0], par_off[1], mu_err, par_off[2], sigma_err, par_off[3],par_off[4]])
+
+
                 g3=plt.scatter(binc[sel_off_new],hist[sel_off_new],label='2nd peak',color='orange')
                 plt.errorbar(binc[sel_off_new], hist[sel_off_new], err_hist[sel_off_new],fmt='.',color='orange',ecolor='lightgray', elinewidth=2, capsize=0)
                 g4=plt.plot(binc[sel_off_new], gaussian_func(binc[sel_off_new], *par_off),label='2nd peak fit'+' ($\chi^2$/dof = %s'%chi2+')',color='orange')
@@ -147,8 +167,13 @@ for k,el in enumerate(Elements):
         plt.savefig('FitPeak2_channel_'+el+ch.format(i))
     #    plt.show()
     paramTot = parameters1 + parameters2
+    if (el == 'Co'):
+        paramTotCo = paramCo1 + paramCo2
+        np.savetxt("ParametersCo1.csv", paramTotCo, delimiter=" ", fmt='%s')
+    #print(paramTotCo, paramCo1, paramCo2)
 
     np.savetxt("Parameters"+el+".csv", paramTot, delimiter=" ", fmt='%s')
+
 
     #parameters1_table = AsciiTable(parameters1)
     #parameters2_table = AsciiTable(parameters2)
