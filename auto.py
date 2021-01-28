@@ -7,17 +7,22 @@ from terminaltables import AsciiTable
 import csv
 import pandas
 
-def chi2red(sel,*p):
-    chi2=sum(((hist[sel] - gaussian_func(binc[sel],*p) )/ err_hist[sel]) ** 2)
-    dof=len(binc[sel])-5
-    #print(chi2, dof)
-    return round(chi2/dof,2)
-
 def gaussian_func(x, A, mu, sigma, a, b):
     return A * np.exp( - (x - mu)**2 / (2 * sigma**2))+a*x+b
 
 def _2_gaussian_func(x, A1, mu1, sigma1, A2, mu2, sigma2, a, b):
     return A1 * np.exp( - (x - mu1)**2 / (2 * sigma1**2))+a*x+b+A2 * np.exp( - (x - mu2)**2 / (2 * sigma2**2))
+
+
+def chi2red(sel,are1or2gaussians,*p):
+    if are1or2gaussians==1:
+        chi2=sum(((hist[sel] - gaussian_func(binc[sel],*p) )/ err_hist[sel]) ** 2)
+        dof=len(binc[sel])-5
+    else:
+        chi2=sum(((hist[sel] - _2_gaussian_func(binc[sel],*p) )/ err_hist[sel]) ** 2)
+        dof=len(binc[sel])-8       
+    #print(chi2, dof)
+    return round(chi2/dof,2)
 
 Elements=['Co', 'Na', 'Cs']
 Channel=['ch1', 'ch2', 'ch3']
@@ -71,13 +76,18 @@ for k,el in enumerate(Elements):
             #print(*par_2max)
             #sel_off_2max = (binc>(par_2max[1]-3*par_2max[2]))*(binc<(par_2max[4]+3*par_2max[5]))
             #par_2max_off, par_va_2max_off = curve_fit(_2_gaussian_func, binc[defin], hist[defin])
-
+            
+            chi2=chi2red(defin,2,*par_2max)
+            a=chi2**0.5
+            print(a)
+        
+            
             plt.figure(10*k+i+1, figsize=(16,10))
             g1=plt.scatter(binc[defin],hist[defin],label='1st peak',color='lightblue')
             plt.errorbar(binc[defin], hist[defin], err_hist[defin],fmt='.', color='lightblue',ecolor='lightgray', elinewidth=2, capsize=0)
-            g2=plt.plot(binc[defin], _2_gaussian_func(binc[defin], *par_2max),label='peak fit'+' ($\chi^2$/dof = %s'+')',color='lightblue')
+            g2=plt.plot(binc[defin], _2_gaussian_func(binc[defin], *par_2max),label='peak fit'+' ($\chi^2$/dof = %s'%chi2+')',color='lightblue')
 
-        if (el == 'Na' or 'Cs'):
+        else:
             sel = (binc>(binc[m]*0.93))*(binc<(binc[m]*1.07))
             mean = np.mean(binc[sel])
 
@@ -89,11 +99,15 @@ for k,el in enumerate(Elements):
             mu_err = np.sqrt(np.diag(par_var_off)[1])
             sigma_err = np.sqrt(np.diag(par_var_off)[2])
             parameters1.append([i+1, par_off[0],par_off[1], mu_err, par_off[2], sigma_err, par_off[3],par_off[4]])
-
+            
+            chi2=chi2red(sel_off,1,*par_off)
+            a=chi2**0.5
+            print(a)
+            
             plt.figure(10*k+i+1, figsize=(16,10))
             g1=plt.scatter(binc[sel_off],hist[sel_off],label='1st peak',color='lightblue')
             plt.errorbar(binc[sel_off], hist[sel_off], err_hist[sel_off],fmt='.', color='lightblue',ecolor='lightgray', elinewidth=2, capsize=0)
-            g2=plt.plot(binc[sel_off], gaussian_func(binc[sel_off], *par_off),label='1st peak fit'+' ($\chi^2$/dof = %s'%chi2red(sel_off,*par_off)+')',color='lightblue')
+            g2=plt.plot(binc[sel_off], gaussian_func(binc[sel_off], *par_off),label='1st peak fit'+' ($\chi^2$/dof = %s'%chi2+')',color='lightblue')
 
             if (el=='Na'): # or 'Na'
 
@@ -115,10 +129,14 @@ for k,el in enumerate(Elements):
                 mu_err = np.sqrt(np.diag(par_var_off)[1])
                 sigma_err = np.sqrt(np.diag(par_var_off)[2])
                 parameters2.append([i+1, par_off[0], par_off[1], mu_err, par_off[2], sigma_err, par_off[3],par_off[4]])
-
+               
+                chi2=chi2red(sel_off_new,1,*par_off)
+                a=chi2**0.5
+                print(a)
+                
                 g3=plt.scatter(binc[sel_off_new],hist[sel_off_new],label='2nd peak',color='orange')
                 plt.errorbar(binc[sel_off_new], hist[sel_off_new], err_hist[sel_off_new],fmt='.',color='orange',ecolor='lightgray', elinewidth=2, capsize=0)
-                g4=plt.plot(binc[sel_off_new], gaussian_func(binc[sel_off_new], *par_off),label='2nd peak fit'+' ($\chi^2$/dof = %s'%chi2red(sel_off,*par_off)+')',color='orange')
+                g4=plt.plot(binc[sel_off_new], gaussian_func(binc[sel_off_new], *par_off),label='2nd peak fit'+' ($\chi^2$/dof = %s'%chi2+')',color='orange')
 
         plt.title(Title[i]+' '+el,fontsize=17)
         plt.xlabel('ADC',fontsize=17)
